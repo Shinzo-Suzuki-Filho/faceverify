@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FaceVerify - Autenticação Biométrica Facial</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    :root {
+      --primary: #4f46e5;
+      --primary-dark: #4338ca;
+      --secondary: #10b981;
+      --dark: #1e293b;
+      --darker: #0f172a;
+      --light: #f8fafc;
+      --gray: #64748b;
+      --light-gray: #e2e8f0;
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --transition: all 0.3s ease;
+    }
+
+    body {
+      background: linear-gradient(135deg, var(--darker), var(--dark));
+      color: var(--light);
+      line-height: 1.6;
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Header Styles */
+    header {
+      padding: 20px 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: white;
+    }
+
+    .logo i {
+      color: var(--secondary);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 25px;
+    }
+
+    .nav-links a {
+      color: var(--light-gray);
+      text-decoration: none;
+      font-weight: 500;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .nav-links a:hover {
+      color: white;
+    }
+
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--primary);
+      transition: var(--transition);
+    }
+
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+
+    .cta-button {
+      background: var(--primary);
+      color: white;
+      padding: 12px 25px;
+      border-radius: 30px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: var(--transition);
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .cta-button:hover {
+      background: var(--primary-dark);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+    }
+
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 100px 0 80px;
+      display: flex;
+      align-items: center;
+      gap: 50px;
+    }
+
+    .hero-content {
+      flex: 1;
+    }
+
+    .hero h1 {
+      font-size: 3.5rem;
+      line-height: 1.2;
+      margin-bottom: 20px;
+      background: linear-gradient(to right, #818cf8, #4f46e5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      color: var(--light-gray);
+      margin-bottom: 30px;
+      max-width: 600px;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .secondary-button {
+      background: transparent;
+      color: white;
+      padding: 12px 25px;
+      border-radius: 30px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: var(--transition);
+      border: 2px solid var(--primary);
+    }
+
+    .secondary-button:hover {
+      background: rgba(79, 70, 229, 0.1);
+      transform: translateY(-3px);
+    }
+
+    .hero-image {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      position: relative;
+    }
+
+    .face-scan {
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background: conic-gradient(#4f46e5, #10b981, #4f46e5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: rotate 15s linear infinite;
+      box-shadow: 0 0 50px rgba(79, 70, 229, 0.3);
+    }
+
+    .face-scan-inner {
+      width: 280px;
+      height: 280px;
+      border-radius: 50%;
+      background: var(--dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--light-gray);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .face-scan-inner i {
+      font-size: 8rem;
+      color: var(--secondary);
+      opacity: 0.8;
+    }
+
+    .scan-lines {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 1px solid rgba(16, 185, 129, 0.5);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+      70% { box-shadow: 0 0 0 15px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    /* Features Section */
+    .section {
+      padding: 100px 0;
+    }
+
+    .section-title {
+      text-align: center;
+      margin-bottom: 70px;
+    }
+
+    .section-title h2 {
+      font-size: 2.5rem;
+      margin-bottom: 15px;
+      background: linear-gradient(to right, #818cf8, #4f46e5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .section-title p {
+      color: var(--light-gray);
+      max-width: 600px;
+      margin: 0 auto;
+      font-size: 1.1rem;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+    }
+
+    .feature-card {
+      background: var(--card-bg);
+      border-radius: 15px;
+      padding: 30px;
+      text-align: center;
+      transition: var(--transition);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: var(--primary);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: var(--transition);
+    }
+
+    .feature-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .feature-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .feature-icon {
+      font-size: 3rem;
+      color: var(--secondary);
+      margin-bottom: 20px;
+      background: rgba(16, 185, 129, 0.1);
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      margin: 0 auto 20px;
+    }
+
+    .feature-card h3 {
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+    }
+
+    .feature-card p {
+      color: var(--light-gray);
+    }
+
+    /* Security Section */
+    .security-section {
+      background: rgba(15, 23, 42, 0.5);
+    }
+
+    .security-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 30px;
+    }
+
+    .security-item {
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: 15px;
+      border-left: 4px solid var(--secondary);
+    }
+
+    .security-item h3 {
+      font-size: 1.3rem;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .security-item h3 i {
+      color: var(--secondary);
+    }
+
+    /* Tech Stack Section */
+    .tech-stack {
+      background: var(--card-bg);
+      border-radius: 15px;
+      padding: 40px;
+      text-align: center;
+      margin: 40px 0;
+    }
+
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 30px;
+      margin-top: 30px;
+    }
+
+    .tech-item {
+      background: rgba(15, 23, 42, 0.8);
+      padding: 25px 15px;
+      border-radius: 10px;
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .tech-item:hover {
+      transform: scale(1.05);
+      background: rgba(79, 70, 229, 0.1);
+    }
+
+    .tech-logo {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      color: #60a5fa;
+    }
+
+    .tech-item h4 {
+      font-size: 0.9rem;
+      color: var(--light-gray);
+    }
+
+    /* GitHub Section */
+    .github-section {
+      text-align: center;
+      padding: 80px 0;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    }
+
+    .github-section h2 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+    }
+
+    .github-section p {
+      max-width: 600px;
+      margin: 0 auto 30px;
+      font-size: 1.1rem;
+    }
+
+    .github-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: white;
+      color: var(--dark);
+      padding: 15px 30px;
+      border-radius: 30px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: var(--transition);
+      margin-top: 20px;
+    }
+
+    .github-link:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Footer */
+    footer {
+      background: var(--dark);
+      padding: 60px 0 20px;
+      margin-top: auto;
+    }
+
+    .footer-content {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 40px;
+      margin-bottom: 40px;
+    }
+
+    .footer-column h3 {
+      font-size: 1.3rem;
+      margin-bottom: 20px;
+      color: var(--light-gray);
+    }
+
+    .footer-links {
+      list-style: none;
+    }
+
+    .footer-links li {
+      margin-bottom: 10px;
+    }
+
+    .footer-links a {
+      color: var(--gray);
+      text-decoration: none;
+      transition: var(--transition);
+    }
+
+    .footer-links a:hover {
+      color: white;
+      padding-left: 5px;
+    }
+
+    .social-links {
+      display: flex;
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .social-links a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      transition: var(--transition);
+    }
+
+    .social-links a:hover {
+      background: var(--primary);
+      transform: translateY(-3px);
+    }
+
+    .copyright {
+      text-align: center;
+      color: var(--gray);
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .mobile-menu-btn {
+        display: block;
+      }
+      
+      .nav-links {
+        display: none;
+        position: absolute;
+        top: 70px;
+        left: 0;
+        right: 0;
+        background: var(--dark);
+        flex-direction: column;
+        padding: 20px;
+        gap: 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .hero {
+        flex-direction: column;
+        text-align: center;
+        padding: 80px 0 60px;
+      }
+      
+      .hero p {
+        margin: 0 auto 30px;
+      }
+      
+      .hero-buttons {
+        justify-content: center;
+      }
+      
+      .nav-links.active {
+        display: flex;
+      }
+      
+      .hero h1 {
+        font-size: 2.5rem;
+      }
+      
+      .section {
+        padding: 60px 0;
+      }
+      
+      .section-title h2 {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="container">
+      <nav class="navbar">
+        <div class="logo">
+          <i class="fas fa-shield-alt"></i>
+          <span>FaceVerify</span>
+        </div>
+        <button class="mobile-menu-btn" id="menuToggle">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div class="nav-links" id="navLinks">
+          <a href="#features">Recursos</a>
+          <a href="#technology">Tecnologia</a>
+          <a href="#security">Segurança</a>
+          <a href="#compliance">Conformidade</a>
+          <a href="#github">GitHub</a>
+        </div>
+        <a href="#github" class="cta-button">
+          <i class="fab fa-github"></i> GitHub
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <h1>Solução de Autenticação Biométrica Facial Segura e Acessível</h1>
+        <p>Modernizando a segurança de acesso com Inteligência Artificial. Substitua senhas e cartões de acesso por verificação facial ultrarrápida e precisa, desenvolvida com as mais recentes inovações em Deep Learning e Visão Computacional.</p>
+        <div class="hero-buttons">
+          <a href="#github" class="cta-button">
+            <i class="fas fa-code-branch"></i> Acessar Repositório
+          </a>
+          <a href="#features" class="secondary-button">
+            <i class="fas fa-info-circle"></i> Saiba Mais
+          </a>
+        </div>
+      </div>
+      <div class="hero-image">
+        <div class="face-scan">
+          <div class="face-scan-inner">
+            <div class="scan-lines"></div>
+            <i class="fas fa-user"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="section" id="features">
+    <div class="container">
+      <div class="section-title">
+        <h2>Principais Funcionalidades</h2>
+        <p>Solução completa de autenticação facial com tecnologia de ponta</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fas fa-bolt"></i>
+          </div>
+          <h3>Verificação em Tempo Real</h3>
+          <p>Autenticação ultrarrápida (sub-segundo) para garantir um workflow de usuário fluido e eficiente.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fas fa-eye"></i>
+          </div>
+          <h3>Detecção de Vivacidade</h3>
+          <p>Algoritmos avançados para prevenir fraudes usando fotos, vídeos ou máscaras (spoofing attack).</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fas fa-sync-alt"></i>
+          </div>
+          <h3>Multi-Plataforma</h3>
+          <p>Suporte para integração via API em aplicações Web, Mobile e sistemas de controle de acesso físico.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fas fa-lock"></i>
+          </div>
+          <h3>Privacidade Preservada</h3>
+          <p>Armazenamento seguro de templates faciais criptografados, não das imagens brutas.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <h3>Alta Acurácia</h3>
+          <p>Performance líder de mercado, minimizando falsos positivos e falsos negativos.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fas fa-cogs"></i>
+          </div>
+          <h3>Integração Fácil</h3>
+          <p>API RESTful e SDKs para rápida integração com seus sistemas existentes.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Technology Section -->
+  <section class="section" id="technology">
+    <div class="container">
+      <div class="section-title">
+        <h2>Tecnologia Utilizada</h2>
+        <p>Desenvolvido com as mais recentes inovações em Deep Learning e Visão Computacional</p>
+      </div>
+      <div class="tech-stack">
+        <h3>Stack Tecnológica</h3>
+        <div class="tech-grid">
+          <div class="tech-item">
+            <div class="tech-logo">
+              <i class="fab fa-python"></i>
+            </div>
+            <h4>Python</h4>
+          </div>
+          <div class="tech-item">
+            <div class="tech-logo">
+              <i class="fas fa-brain"></i>
+            </div>
+            <h4>TensorFlow</h4>
+          </div>
+          <div class="tech-item">
+            <div class="tech-logo">
+              <i class="fas fa-robot"></i>
+            </div>
+            <h4>PyTorch</h4>
+          </div>
+          <div class="tech-item">
+            <div class="tech-logo">
+              <i class="fas fa-camera"></i>
+            </div>
+            <h4>OpenCV</h4>
+          </div>
+          <div class="tech-item">
+            <div class="tech-logo">
+              <i class="fab fa-docker"></i>
+            </div>
+            <h4>Docker</h4>
+          </div>
+          <div class="tech-item">
+            <div class="tech-logo">
+              <i class="fab fa-aws"></i>
+            </div>
+            <h4>AWS</h4>
+          </div>
+          <div class="tech-item">
+            <div class="tech-logo">
+              <i class="fab fa-microsoft"></i>
+            </div>
+            <h4>Azure</h4>
+          </div>
+          <div class="tech-item">
+            <div class="tech-logo">
+              <i class="fab fa-google"></i>
+            </div>
+            <h4>GCP</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Security Section -->
+  <section class="section security-section" id="security">
+    <div class="container">
+      <div class="section-title">
+        <h2>Arquitetura de Segurança</h2>
+        <p>Infraestrutura escalável baseada em microsserviços com foco na proteção de dados</p>
+      </div>
+      <div class="security-grid">
+        <div class="security-item">
+          <h3><i class="fas fa-server"></i> Microsserviços</h3>
+          <p>Arquitetura escalável baseada em Docker e pronta para implantação em nuvem (AWS, Azure ou GCP).</p>
+        </div>
+        <div class="security-item">
+          <h3><i class="fas fa-database"></i> Banco de Dados Seguro</h3>
+          <p>Soluções otimizadas para armazenamento seguro de vetores faciais (face embeddings) com criptografia AES-256.</p>
+        </div>
+        <div class="security-item">
+          <h3><i class="fas fa-network-wired"></i> Criptografia</h3>
+          <p>Criptografia de ponta a ponta para todos os dados em trânsito e em repouso, garantindo máxima segurança.</p>
+        </div>
+        <div class="security-item">
+          <h3><i class="fas fa-user-shield"></i> Controle de Acesso</h3>
+          <p>Controles rigorosos baseados em políticas de least privilege (privilégio mínimo necessário).</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Compliance Section -->
+  <section class="section" id="compliance">
+    <div class="container">
+      <div class="section-title">
+        <h2>Conformidade com LGPD</h2>
+        <p>Desenvolvido seguindo os princípios de Privacy by Design e Default</p>
+      </div>
+      <div class="security-grid">
+        <div class="security-item">
+          <h3><i class="fas fa-file-contract"></i> Consentimento Explícito</h3>
+          <p>Módulos para gerenciamento e registro do consentimento do titular dos dados.</p>
+        </div>
+        <div class="security-item">
+          <h3><i class="fas fa-shield-alt"></i> Privacy by Design</h3>
+          <p>Solução projetada com foco na segurança desde a concepção e desenvolvimento.</p>
+        </div>
+        <div class="security-item">
+          <h3><i class="fas fa-user-check"></i> Titularidade de Dados</h3>
+          <p>Recursos para exercer direitos dos titulares de dados conforme previsto na LGPD.</p>
+        </div>
+        <div class="security-item">
+          <h3><i class="fas fa-clipboard-list"></i> Auditoria</h3>
+          <p>Registros completos de acesso e processamento para fins de auditoria e conformidade.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GitHub Section -->
+  <section class="github-section" id="github">
+    <div class="container">
+      <h2>Lançado no GitHub Pages</h2>
+      <p>FaceVerify é um projeto open-source disponível no GitHub Pages, permitindo fácil acesso, colaboração e implementação por desenvolvedores e organizações interessadas em soluções de autenticação facial segura.</p>
+      <a href="https://github.com/seu-usuario/faceverify" target="_blank" class="github-link">
+        <i class="fab fa-github"></i> Acessar Repositório no GitHub
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-column">
+          <h3>FaceVerify</h3>
+          <p>Solução de autenticação biométrica facial segura e acessível, modernizando a segurança de acesso com inteligência artificial.</p>
+          <div class="social-links">
+            <a href="#"><i class="fab fa-github"></i></a>
+            <a href="#"><i class="fab fa-linkedin"></i></a>
+            <a href="#"><i class="fab fa-twitter"></i></a>
+          </div>
+        </div>
+        <div class="footer-column">
+          <h3>Recursos</h3>
+          <ul class="footer-links">
+            <li><a href="#features">Funcionalidades</a></li>
+            <li><a href="#technology">Tecnologia</a></li>
+            <li><a href="#security">Segurança</a></li>
+            <li><a href="#compliance">Conformidade</a></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h3>Documentação</h3>
+          <ul class="footer-links">
+            <li><a href="#">Guia de Instalação</a></li>
+            <li><a href="#">API Documentation</a></li>
+            <li><a href="#">SDKs</a></li>
+            <li><a href="#">Exemplos de Código</a></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h3>Legal</h3>
+          <ul class="footer-links">
+            <li><a href="#">Termos de Uso</a></li>
+            <li><a href="#">Política de Privacidade</a></li>
+            <li><a href="#">LGPD</a></li>
+            <li><a href="#">Segurança de Dados</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="copyright">
+        &copy; 2025 FaceVerify. Todos os direitos reservados. Solução em conformidade com a LGPD.
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Mobile menu toggle
+    const menuToggle = document.getElementById('menuToggle');
+    const navLinks = document.getElementById('navLinks');
+
+    menuToggle.addEventListener('click', () => {
+      navLinks.classList.toggle('active');
+    });
+
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        const targetId = this.getAttribute('href');
+        if(targetId === '#') return;
+        
+        const targetElement = document.querySelector(targetId);
+        if(targetElement) {
+          window.scrollTo({
+            top: targetElement.offsetTop - 80,
+            behavior: 'smooth'
+          });
+          
+          // Close mobile menu after clicking
+          navLinks.classList.remove('active');
+        }
+      });
+    });
+
+    // Add scroll effect to header
+    window.addEventListener('scroll', () => {
+      const header = document.querySelector('header');
+      if(window.scrollY > 50) {
+        header.style.boxShadow = '0 5px 20px rgba(0, 0, 0, 0.1)';
+      } else {
+        header.style.boxShadow = 'none';
+      }
+    });
+  </script>
+</body>
+</html>
+
